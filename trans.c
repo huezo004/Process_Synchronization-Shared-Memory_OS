@@ -11,16 +11,18 @@
 
 int main(int argc, const char * argv[]){
 
+  // Handle user answer if file to be copied to exists
    char answer[2]=""; 
-
    char n[2]= "N"; 
 
+   //First check if there are 3 arguments in command line
    if(argc!=3){
      fprintf(stderr, "Incorrect number of commands\n");    
      exit(EXIT_FAILURE);
    }
 
-   //Check file existance
+   //Check if file to be copied to exists,if so ask user if file is to be overriden
+   //Check file existance with access(file, bitmode) F_OK stands dor existance of file   
    if(access(argv[2], F_OK ) != -1 ) {
      
      printf("File exists, would you like to override the file? Enter Y/N\n"); 
@@ -33,40 +35,46 @@ int main(int argc, const char * argv[]){
    }
 
    //File intizialitation and error handling    
-   FILE *file1;
+
+   // Creation of File pointers 
+   FILE *file1;   
 
    FILE *file2;
 
-   file1= fopen(argv[1],"rb");
+   file1= fopen(argv[1],"rb");  //Open file given by first argument 
 
-   file2= fopen(argv[2],"wb");
+   file2= fopen(argv[2],"wb");  // Open file given by second argument 
  
    if(file1==NULL){
-      fprintf(stderr, "File to be copied cannot be opened!\n");
+     fprintf(stderr, "File to be copied cannot be opened!\n"); // Check and exists if file cannot be opened 
       exit(1);
     }
    
    if(file2==NULL){
-     fprintf(stderr, "File to write copy cannot be opened!\n");
+     fprintf(stderr, "File to write copy cannot be opened!\n");  // Check and exists if file cannot be opened 
      exit(1);
     }
   
    //Pipe initialization and error handling 
    
-   int pipe1[2]; 
+   int pipe1[2];   // Creation of first pipe. Parent process will write to pipe1 
 
-   int pipe2[2]; 
+   int pipe2[2];  // Cretion of second pipe. Child process will write to pipe2
    
-   if(pipe(pipe1)== -1){
+   if(pipe(pipe1)== -1){ //Check for error in pipe creation.
       perror("Error in pipe creation");
       exit(EXIT_FAILURE);
     }
     
-  if(pipe(pipe2)== -1){
+   if(pipe(pipe2)== -1){// Check if error in second pipe creation. 
      perror("Error in second pipe creation");
      exit(EXIT_FAILURE);   
    }
-  
+   
+
+  /*The array that will be passed trough the pipes btw parent and child. 
+    Holds # of bytes being copied in shared memory and number of "passes"*/ 
+
   int block[2]={100,4020};
 
   int parentReceive[2]={0,0}; 
@@ -88,7 +96,7 @@ int main(int argc, const char * argv[]){
     //Close pipe2 write 
      close(pipe2[1]); 
 
-     write(pipe1[1], &block, sizeof(block));   
+     write(pipe1[1], &block, sizeof(block));  
  
      close(pipe1[1]); 
         
